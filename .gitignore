@@ -1,0 +1,17 @@
+# binaries
+bin/*
+
+# cmake folders
+build/
+.cache/
+CMakeFiles/
+Testing/
+
+# cmake files
+Makefile
+CMakeLists.txt
+CMakeCache.txt
+DartConfiguration.tcl
+compile_commands.json
+*.cmake
+*.a
