@@ -1,27 +1,29 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 
 using namespace std;
 
-int main() {
+int main(int argc, char *argv[]) {
     string command;
 
-    cout << "Bem-vindo à CLI simples! Digite 'enter' para entrar na CLI e 'exit' para sair." << endl;
-
-    while (true) {
-        cout << "> ";
-        cin >> command;
-
-        if (command == "enter") {
-            cout << "Você entrou na CLI. Para sair, digite 'exit'." << endl;
-           
-        } else if (command == "exit") {
-            cout << "Saindo da CLI. Até mais!" << endl;
-            break;
-        } else {
-            cout << "Comando inválido. Tente novamente." << endl;
-        }
+    if (argc != 2) {
+        cout << "Uso: " << argv[0] << " <arquivo_de_entrada>" << endl;
+        return 1;
     }
+
+    ifstream inputFile(argv[1]);
+
+    if (!inputFile) {
+        cout << "Erro ao abrir o arquivo de entrada." << endl;
+        return 1;
+    }
+
+    while (getline(inputFile, command)) {
+        cout << "Comando lido do arquivo: " << command << endl;
+    }
+
+    inputFile.close();
 
     return 0;
 }
