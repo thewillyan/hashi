@@ -24,3 +24,9 @@ Reg &Reg::operator=(Reg &&other) noexcept {
 bool Reg::operator==(const Reg &other) const {
   return (id == other.id) && (value == other.value) && (year == other.year);
 }
+
+std::ostream &operator<<(std::ostream &os, const Reg &r) {
+  os << "Reg { id: " << r.id << ", value: " << r.value << ", year: " << r.year
+     << "}";
+  return os;
+}

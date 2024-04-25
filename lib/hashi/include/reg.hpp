@@ -1,3 +1,4 @@
+#include <ostream>
 class Reg {
 private:
   unsigned int id;
@@ -22,4 +23,5 @@ public:
   Reg &operator=(Reg &&other) noexcept;
   Reg &operator=(Reg &other) = delete;
   bool operator==(const Reg &other) const;
+  friend std::ostream &operator<<(std::ostream &os, const Reg &r);
 };
