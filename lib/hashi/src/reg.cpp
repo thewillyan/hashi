@@ -27,6 +27,6 @@ bool Reg::operator==(const Reg &other) const {
 
 std::ostream &operator<<(std::ostream &os, const Reg &r) {
   os << "Reg { id: " << r.id << ", value: " << r.value << ", year: " << r.year
-     << "}";
+     << " }";
   return os;
 }
