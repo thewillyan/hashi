@@ -37,8 +37,6 @@ TEST_CASE("Register stream works", "[RegStream]") {
   Reg r;
   for (size_t i = 0; i < 10; ++i) {
     stream >> r;
-    INFO("Reg: id = " << r.get_id() << "; value = " << r.get_value()
-                      << "; year = " << r.get_year() << '.');
     REQUIRE(r == ANSWERS[i]);
   }
   REQUIRE(stream.endOfStream());
