@@ -1,10 +1,22 @@
-#include "hashi/include/db.hpp"
+#include "hashi/include/stream.hpp"
+#include <fstream>
 #include <iostream>
+#include <stdexcept>
 
-// NOTE: Dummy binary
+// NOTE: RegStream example
 int main() {
-  auto db = Database();
-  db.add_data(5);
-  db.add_data(20);
-  std::cout << "The last item added was: " << db.get_last() << std::endl;
+  std::string file_path = "../db/table.csv";
+  auto fs = std::ifstream(file_path);
+  if (fs.fail()) {
+    throw std::runtime_error(
+        "Failed to open file stream, does the file exist?");
+  }
+
+  auto rs = RegStream(fs);
+  Reg r;
+  std::cout << "DATA on " << file_path << std::endl;
+  while (!rs.endOfStream()) {
+    rs >> r;
+    std::cout << r << std::endl;
+  }
 }

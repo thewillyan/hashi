@@ -9,7 +9,6 @@ Testing/
 
 # cmake files
 Makefile
-CMakeLists.txt
 CMakeCache.txt
 DartConfiguration.tcl
 compile_commands.json
