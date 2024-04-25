@@ -1,4 +1,5 @@
 #include "hashi/include/stream.hpp"
+#include <istream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -34,4 +35,20 @@ Reg parseCsv(const std::string &s) {
   }
 
   return Reg(id, value, year);
+}
+
+RegStream::RegStream(std::istream &istream) : input{istream} {}
+RegStream::~RegStream() {}
+
+bool RegStream::endOfStream() const { return input.eof(); }
+
+// operators
+RegStream &RegStream::operator>>(Reg &r) {
+  std::string line;
+
+  if (std::getline(input, line)) {
+    auto new_reg = Reg(parseCsv(line));
+    r = std::move(new_reg);
+  }
+  return *this;
 }

@@ -6,6 +6,7 @@ private:
 
 public:
   Reg(unsigned int id, double value, unsigned int year);
+  Reg();
 
   // getters
   unsigned int get_id() const;
@@ -18,5 +19,7 @@ public:
   void set_year(unsigned int);
 
   // operators
+  Reg &operator=(Reg &&other) noexcept;
+  Reg &operator=(Reg &other) = delete;
   bool operator==(const Reg &other) const;
 };
