@@ -1,3 +1,6 @@
+#ifndef HASHI_REG
+#define HASHI_REG
+
 #include <ostream>
 class Reg {
 private:
@@ -25,3 +28,5 @@ public:
   bool operator==(const Reg &other) const;
   friend std::ostream &operator<<(std::ostream &os, const Reg &r);
 };
+
+#endif
