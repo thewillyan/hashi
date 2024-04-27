@@ -1,6 +1,5 @@
 #include "hashi/include/avail.hpp"
 #include <bit>
-#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
@@ -9,7 +8,7 @@ AvailFileParser::AvailFileParser(std::string file_path)
     : avail_file{file_path} {
 
   if (!std::filesystem::exists(avail_file)) {
-    std::ofstream out_file("example.txt", std::ios::binary);
+    std::ofstream out_file(file_path, std::ios::binary);
     if (!out_file.is_open()) {
       throw std::runtime_error("Failed to create the availability file");
     };
@@ -90,7 +89,7 @@ std::vector<size_t> AvailFileParser::get_all_unavail() const {
 }
 
 void AvailFileParser::incr_num_entries() {
-  std::ofstream file(avail_file, std::ios::binary);
+  std::ofstream file(avail_file, std::ios::in | std::ios::binary);
   if (!file.is_open()) {
     throw std::runtime_error("Failed to open the availability file");
   };
@@ -107,53 +106,63 @@ void AvailFileParser::incr_num_entries() {
 }
 
 void AvailFileParser::set_as_avail(size_t idx) const {
-  std::ifstream in_file(avail_file, std::ios::binary);
-  if (!in_file.is_open()) {
+  // if (idx >= num_entries) {
+  //   throw std::runtime_error("Invalid idx id on set_as_avail");
+  // }
+
+  std::fstream file(avail_file,
+                    std::ios::in | std::ios::out | std::ios::binary);
+  if (!file.is_open()) {
     throw std::runtime_error("Failed to open the availability file to read");
   };
 
-  size_t skip = idx / 8;
-  in_file.seekg(skip + 2, std::ios::beg);
+  size_t skip = 2 + (idx / 8);
+  file.seekg(skip, std::ios::beg);
 
-  char byte;
-  in_file.get(byte);
-  in_file.close();
+  char byte = file.get();
 
   size_t byte_pos = idx % 8;
   std::uint8_t mask = 0b10000000 >> byte_pos;
   byte = byte | mask;
 
-  std::ofstream out_file(avail_file, std::ios::binary);
-  if (!out_file.is_open()) {
-    throw std::runtime_error("Failed to open the availability file to write");
-  };
-  out_file.seekp(2 + skip, std::ios::beg);
-  out_file.put(byte);
-  out_file.close();
+  file.seekp(skip, std::ios::beg);
+  file.put(byte);
+  file.close();
 }
 
 void AvailFileParser::set_as_unavail(size_t idx) const {
-  std::ifstream in_file(avail_file, std::ios::binary);
-  if (!in_file.is_open()) {
+  // if (idx >= num_entries) {
+  //   throw std::runtime_error("Invalid idx id on set_as_unavail");
+  // }
+
+  std::fstream file(avail_file,
+                    std::ios::in | std::ios::out | std::ios::binary);
+  if (!file.is_open()) {
     throw std::runtime_error("Failed to open the availability file to read");
   };
 
-  size_t skip = idx / 8;
-  in_file.seekg(skip + 2, std::ios::beg);
-
-  char byte;
-  in_file.get(byte);
-  in_file.close();
+  size_t skip = 2 + (idx / 8);
+  file.seekg(skip, std::ios::beg);
+  char byte = file.get();
 
   size_t byte_pos = idx % 8;
   std::uint8_t mask = 0b01111111 >> byte_pos;
   byte = byte & mask;
 
-  std::ofstream out_file(avail_file, std::ios::binary);
-  if (!out_file.is_open()) {
-    throw std::runtime_error("Failed to open the availability file to write");
-  };
-  out_file.seekp(2 + skip, std::ios::beg);
-  out_file.put(byte);
-  out_file.close();
+  file.seekp(skip, std::ios::beg);
+  file.put(byte);
+  file.close();
+}
+
+void AvailFileParser::add_entry() {
+  if (num_entries % 8 == 0) {
+    std::ofstream out_file(avail_file, std::ios::binary | std::ios::app);
+    if (!out_file.is_open()) {
+      throw std::runtime_error("Failed to open the availability file to write");
+    };
+    char byte = 0;
+    out_file.write(&byte, 1);
+    out_file.close();
+  }
+  incr_num_entries();
 }
