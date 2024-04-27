@@ -21,7 +21,9 @@ public:
   AvailFileParser(std::string file_path);
 
   unsigned short get_num_entries() const;
+  // get the index of an available register
   std::optional<size_t> get_avail_idx() const;
+  // get all indexes of an unavailable (occupied) registers
   std::vector<size_t> get_all_unavail() const;
 
   void add_entry();
