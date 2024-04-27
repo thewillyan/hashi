@@ -1,5 +1,7 @@
 # binaries
 bin/*
+*.bin
+*.csv
 
 # cmake folders
 build/
@@ -14,3 +16,7 @@ DartConfiguration.tcl
 compile_commands.json
 *.cmake
 *.a
+
+# execptions
+!db/compras.csv
+!db/compras_avail.bin

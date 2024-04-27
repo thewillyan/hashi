@@ -1,22 +1,12 @@
-#include "hashi/include/stream.hpp"
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
+#include "hashi/include/db.hpp"
 
-// NOTE: RegStream example
+// NOTE: DbTable example
 int main() {
-  std::string file_path = "../db/table.csv";
-  auto fs = std::ifstream(file_path);
-  if (fs.fail()) {
-    throw std::runtime_error(
-        "Failed to open file stream, does the file exist?");
-  }
+  auto table = DbTable("../db", "tabela");
+  table.add_reg(Reg(1, 53.2, 1998));
+  table.add_reg(Reg(2, 1240.7, 2004));
+  table.add_reg(Reg(3, 955.83, 1995));
 
-  auto rs = RegStream(fs);
-  Reg r;
-  std::cout << "DATA on " << file_path << std::endl;
-  while (!rs.endOfStream()) {
-    rs >> r;
-    std::cout << r << std::endl;
-  }
+  // delete the 2nd Reg (line 2 in the database file)
+  table.del_reg(2);
 }
