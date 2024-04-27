@@ -37,6 +37,12 @@ Reg parseCsv(const std::string &s) {
   return Reg(id, value, year);
 }
 
+std::string regToCsv(const Reg &r) {
+  std::ostringstream oss;
+  oss << r.get_id() << ',' << r.get_value() << ',' << r.get_year();
+  return oss.str();
+}
+
 RegStream::RegStream(std::istream &istream) : input{istream} {}
 RegStream::~RegStream() {}
 
