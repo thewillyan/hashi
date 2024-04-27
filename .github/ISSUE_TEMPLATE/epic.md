@@ -2,7 +2,7 @@
 name: Epic
 about: Sugira um conjunto de histórias de usuário
 title: "[epic]"
-labels: epic
+labels: epic, test
 assignees: ''
 
 ---
