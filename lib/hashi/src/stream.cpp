@@ -1,5 +1,6 @@
 #include "hashi/include/stream.hpp"
 #include <istream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -47,6 +48,12 @@ RegStream::RegStream(std::istream &istream) : input{istream} {}
 RegStream::~RegStream() {}
 
 bool RegStream::endOfStream() const { return input.eof(); }
+
+void RegStream::skip(const size_t &n) {
+  for (size_t i = 0; i < n; ++i) {
+    input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+}
 
 // operators
 RegStream &RegStream::operator>>(Reg &r) {
