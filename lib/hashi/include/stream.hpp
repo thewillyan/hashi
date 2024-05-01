@@ -16,8 +16,9 @@ public:
   RegStream(std::istream &stream);
   ~RegStream();
 
-  // methods
   bool endOfStream() const;
+  // skip `n` registers
+  void skip(const size_t &n);
 
   // operators
   RegStream &operator>>(Reg &r);
