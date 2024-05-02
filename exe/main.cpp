@@ -1,4 +1,6 @@
 #include "hashi/include/dir.hpp"
+#include "hashi/include/stream.hpp"
+#include <iostream>
 
 // NOTE: Debug HashiDir
 int main() {
@@ -26,5 +28,10 @@ int main() {
   dir.del_reg(33);
 
   dir.add_reg(Reg{17, 16594.44, 1997});
+
+  auto reg_opt = dir.get_reg(4);
+  if (reg_opt.has_value()) {
+    std::cout << regToCsv(*reg_opt) << std::endl;
+  }
   return 0;
 }

@@ -2,6 +2,7 @@
 
 Reg::Reg(unsigned int i, double v, unsigned int y) : id{i}, value{v}, year{y} {}
 Reg::Reg() : id{0}, value{0.0}, year{0} {}
+Reg::Reg(Reg &&other) : id{other.id}, value{other.value}, year{other.year} {}
 
 // getters
 unsigned int Reg::get_id() const { return id; }

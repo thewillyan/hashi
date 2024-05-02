@@ -3,6 +3,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -97,6 +98,31 @@ void HashiDir::flush_bucket(const Bucket &b) const {
   dir_file.write(reinterpret_cast<const char *>(&ld), DEEP_SIZE);
   unsigned int key = b.get_key();
   dir_file.write(reinterpret_cast<const char *>(&key), BUCKET_PTR_SIZE);
+}
+
+Bucket HashiDir::get_bucket(const unsigned int &rid) const {
+  std::ifstream ifile{hashd_file, std::ios::binary};
+
+  if (!ifile.is_open()) {
+    throw std::runtime_error("Failed to open the bucket directory " +
+                             hashd_file);
+  }
+
+  unsigned short gd;
+  ifile.read(reinterpret_cast<char *>(&gd), sizeof(gd));
+  auto reg_idx = pickLowBits(rid, static_cast<unsigned int>(gd));
+
+  // jump to bucket_ref index
+  ifile.seekg(reg_idx * (BUCKET_REF_SIZE), std::ios::cur);
+
+  unsigned short ld;
+  unsigned int bucket_key;
+
+  ifile.read(reinterpret_cast<char *>(&ld), DEEP_SIZE);
+  ifile.read(reinterpret_cast<char *>(&bucket_key), BUCKET_PTR_SIZE);
+  ifile.close();
+
+  return Bucket{ld, bucket_key, bucket_dir};
 }
 
 void HashiDir::duplicate_dir() {
@@ -225,28 +251,7 @@ void HashiDir::add_into_bucket(Bucket &b, const Reg &r) {
 }
 
 void HashiDir::add_reg(const Reg &r) {
-  std::ifstream ifile{hashd_file, std::ios::binary};
-
-  if (!ifile.is_open()) {
-    throw std::runtime_error("Failed to open the bucket directory " +
-                             hashd_file);
-  }
-
-  unsigned short gd;
-  ifile.read(reinterpret_cast<char *>(&gd), sizeof(gd));
-  auto reg_idx = pickLowBits(r.get_id(), static_cast<unsigned int>(gd));
-
-  // jump to bucket_ref index
-  ifile.seekg(reg_idx * (BUCKET_REF_SIZE), std::ios::cur);
-
-  unsigned short ld;
-  unsigned int bucket_key;
-
-  ifile.read(reinterpret_cast<char *>(&ld), DEEP_SIZE);
-  ifile.read(reinterpret_cast<char *>(&bucket_key), BUCKET_PTR_SIZE);
-  ifile.close();
-
-  Bucket b{ld, bucket_key, bucket_dir};
+  Bucket b = get_bucket(r.get_id());
   add_into_bucket(b, r);
 }
 
@@ -280,27 +285,25 @@ void HashiDir::del_from_bucket(const Bucket &b, const unsigned int &rid) const {
 }
 
 void HashiDir::del_reg(const unsigned int &rid) const {
-  std::ifstream ifile{hashd_file, std::ios::binary};
+  del_from_bucket(get_bucket(rid), rid);
+}
 
-  if (!ifile.is_open()) {
-    throw std::runtime_error("Failed to open the bucket directory " +
-                             hashd_file);
+std::optional<Reg> HashiDir::get_reg(const unsigned int &rid) const {
+  Bucket b = get_bucket(rid);
+  std::fstream bucket_ifs = b.get_fstream(std::ios::in);
+  if (!bucket_ifs.is_open()) {
+    throw std::runtime_error("Failed to open the bucket file");
   }
 
-  unsigned short gd;
-  ifile.read(reinterpret_cast<char *>(&gd), sizeof(gd));
-  auto reg_idx = pickLowBits(rid, static_cast<unsigned int>(gd));
-
-  // jump to bucket_ref index
-  ifile.seekg(reg_idx * (BUCKET_REF_SIZE), std::ios::cur);
-
-  unsigned short ld;
-  unsigned int bucket_key;
-
-  ifile.read(reinterpret_cast<char *>(&ld), DEEP_SIZE);
-  ifile.read(reinterpret_cast<char *>(&bucket_key), BUCKET_PTR_SIZE);
-  ifile.close();
-
-  Bucket b{ld, bucket_key, bucket_dir};
-  del_from_bucket(b, rid);
+  std::string line;
+  Reg r;
+  while (std::getline(bucket_ifs, line)) {
+    r = parseCsv(line);
+    if (r.get_id() == rid) {
+      std::optional<Reg> reg_opt(std::move(r));
+      return reg_opt;
+    }
+  }
+  bucket_ifs.close();
+  return {};
 }
