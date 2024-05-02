@@ -60,8 +60,7 @@ RegStream &RegStream::operator>>(Reg &r) {
   std::string line;
 
   if (std::getline(input, line)) {
-    auto new_reg = Reg(parseCsv(line));
-    r = std::move(new_reg);
+    r = Reg(parseCsv(line));
   }
   return *this;
 }

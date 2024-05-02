@@ -1,7 +1,7 @@
 #ifndef HASHI_BUCKET
 #define HASHI_BUCKET
 
-#include "hashi/include/stream.hpp"
+#include <ios>
 #include <string>
 
 class Bucket {
@@ -21,7 +21,6 @@ public:
   void incr_local_deep();
 
   std::fstream get_fstream(const std::ios::openmode &flags) const;
-  RegStream get_regstream() const;
 };
 
 #endif // !HASHI_BUCKET
