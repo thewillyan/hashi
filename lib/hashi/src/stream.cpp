@@ -1,5 +1,6 @@
 #include "hashi/include/stream.hpp"
 #include <istream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -48,13 +49,18 @@ RegStream::~RegStream() {}
 
 bool RegStream::endOfStream() const { return input.eof(); }
 
+void RegStream::skip(const size_t &n) {
+  for (size_t i = 0; i < n; ++i) {
+    input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+}
+
 // operators
 RegStream &RegStream::operator>>(Reg &r) {
   std::string line;
 
   if (std::getline(input, line)) {
-    auto new_reg = Reg(parseCsv(line));
-    r = std::move(new_reg);
+    r = Reg(parseCsv(line));
   }
   return *this;
 }

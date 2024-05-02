@@ -30,11 +30,20 @@ include(CTest)
 include(Catch)
 catch_discover_tests(hashi_test)
 
-# add the executable
+# add the executables
 add_executable(hashi exe/main.cpp)
 target_link_libraries(hashi HashiLib)
 add_custom_target(run
      COMMAND ./hashi
      DEPENDS hashi
+     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# add the executables
+add_executable(setup exe/setup.cpp)
+target_link_libraries(setup HashiLib)
+add_custom_target(run_setup
+     COMMAND ./setup
+     DEPENDS setup
      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
