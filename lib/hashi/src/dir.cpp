@@ -135,8 +135,7 @@ Bucket HashiDir::split_bucket(Bucket &b) {
     throw std::runtime_error("Failed to open the bucket file");
   }
 
-  std::string bucket_path = b.get_path();
-  std::string bucket_cache_path = bucket_path + ".cache";
+  std::string bucket_cache_path = b.get_path() + ".cache";
   std::ofstream bucket_cache_ofs{bucket_cache_path};
 
   if (!bucket_cache_ofs.is_open()) {
@@ -168,7 +167,7 @@ Bucket HashiDir::split_bucket(Bucket &b) {
   new_bucket_ofs.close();
   bucket_file.close();
 
-  std::filesystem::rename(bucket_cache_path, bucket_path);
+  std::filesystem::rename(bucket_cache_path, b.get_path());
 
   if (b.get_local_deep() > global_deep) {
     duplicate_dir();
@@ -251,4 +250,57 @@ void HashiDir::add_reg(const Reg &r) {
   add_into_bucket(b, r);
 }
 
-void HashiDir::del_reg(const unsigned int &r_key) const {}
+void HashiDir::del_from_bucket(const Bucket &b, const unsigned int &rid) const {
+  if (!std::filesystem::exists(b.get_path())) {
+    return;
+  }
+  std::fstream bucket_ifs = b.get_fstream(std::ios::in);
+  if (!bucket_ifs.is_open()) {
+    throw std::runtime_error(
+        "Failed to open the bucket file, context: del_from_bucket");
+  }
+
+  std::string bucket_cache_path = b.get_path() + ".cache";
+  std::ofstream bucket_cache_ofs{bucket_cache_path};
+
+  if (!bucket_cache_ofs.is_open()) {
+    throw std::runtime_error("Could not open bucket cache file");
+  }
+
+  Reg r;
+  std::string reg_string;
+  while (std::getline(bucket_ifs, reg_string)) {
+    r = parseCsv(reg_string);
+    if (r.get_id() != rid) {
+      bucket_cache_ofs << reg_string << '\n';
+    }
+  }
+  bucket_ifs.close();
+  std::filesystem::rename(bucket_cache_path, b.get_path());
+}
+
+void HashiDir::del_reg(const unsigned int &rid) const {
+  std::ifstream ifile{hashd_file, std::ios::binary};
+
+  if (!ifile.is_open()) {
+    throw std::runtime_error("Failed to open the bucket directory " +
+                             hashd_file);
+  }
+
+  unsigned short gd;
+  ifile.read(reinterpret_cast<char *>(&gd), sizeof(gd));
+  auto reg_idx = pickLowBits(rid, static_cast<unsigned int>(gd));
+
+  // jump to bucket_ref index
+  ifile.seekg(reg_idx * (BUCKET_REF_SIZE), std::ios::cur);
+
+  unsigned short ld;
+  unsigned int bucket_key;
+
+  ifile.read(reinterpret_cast<char *>(&ld), DEEP_SIZE);
+  ifile.read(reinterpret_cast<char *>(&bucket_key), BUCKET_PTR_SIZE);
+  ifile.close();
+
+  Bucket b{ld, bucket_key, bucket_dir};
+  del_from_bucket(b, rid);
+}
