@@ -1,4 +1,5 @@
 #include "hashi/include/dir.hpp"
+#include "hashi/include/stream.hpp"
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -73,23 +74,59 @@ HashiDir::HashiDir(const std::string &db_path, const std::string &table_name)
 }
 
 void HashiDir::flush_global_deep() const {
-  std::fstream dir_file{hashd_file, std::ios::out};
+  std::fstream dir_file{hashd_file,
+                        std::ios::in | std::ios::out | std::ios::binary};
   if (!dir_file.is_open()) {
     throw std::runtime_error(
         "Failed to open the directory file, context: flush_global_deep");
   }
   dir_file.seekp(0, std::ios::beg);
-  dir_file.write(reinterpret_cast<char *>(global_deep), sizeof(global_deep));
+  dir_file.write(reinterpret_cast<const char *>(&global_deep),
+                 sizeof(global_deep));
 }
 
-void HashiDir::flush_local_deep(const Bucket &b) const {
-  std::fstream dir_file{hashd_file, std::ios::out};
+void HashiDir::flush_bucket(const Bucket &b) const {
+  std::fstream dir_file{hashd_file,
+                        std::ios::in | std::ios::out | std::ios::binary};
   if (!dir_file.is_open()) {
     throw std::runtime_error(
         "Failed to open the directory file, context: flush_global_deep");
   }
   dir_file.seekp(DEEP_SIZE + b.get_key() * BUCKET_REF_SIZE, std::ios::beg);
-  dir_file.write(reinterpret_cast<char *>(b.get_local_deep()), DEEP_SIZE);
+  unsigned short ld = b.get_local_deep();
+  dir_file.write(reinterpret_cast<const char *>(&ld), DEEP_SIZE);
+  unsigned int key = b.get_key();
+  dir_file.write(reinterpret_cast<const char *>(&key), BUCKET_PTR_SIZE);
+}
+
+void HashiDir::duplicate_dir() {
+  std::ifstream dir_ifs{hashd_file, std::ios::binary};
+  if (!dir_ifs.is_open()) {
+    throw std::runtime_error("Could not open hash directory file for write");
+  }
+
+  std::ofstream dir_ofs{hashd_file, std::ios::binary | std::ios::app};
+  if (!dir_ofs.is_open()) {
+    throw std::runtime_error("Could not open hash directory file for write");
+  }
+
+  unsigned short ld;
+  unsigned int key;
+  auto dir_slots = static_cast<unsigned long>(std::pow(2, global_deep));
+
+  // skip global deep
+  dir_ifs.seekg(DEEP_SIZE, std::ios::beg);
+  for (unsigned long i = 0; i < dir_slots; ++i) {
+    dir_ifs.read(reinterpret_cast<char *>(&ld), sizeof(ld));
+    dir_ifs.read(reinterpret_cast<char *>(&key), sizeof(key));
+
+    dir_ofs.write(reinterpret_cast<const char *>(&ld), sizeof(ld));
+    dir_ofs.write(reinterpret_cast<const char *>(&key), sizeof(key));
+  }
+  dir_ifs.close();
+  dir_ofs.close();
+  ++global_deep;
+  flush_global_deep();
 }
 
 Bucket HashiDir::split_bucket(Bucket &b) {
@@ -97,18 +134,17 @@ Bucket HashiDir::split_bucket(Bucket &b) {
   if (!bucket_file.is_open()) {
     throw std::runtime_error("Failed to open the bucket file");
   }
-  RegStream rs{bucket_file};
 
   std::string bucket_path = b.get_path();
-  std::string bucket_cache_path = bucket_path + "_cache";
+  std::string bucket_cache_path = bucket_path + ".cache";
   std::ofstream bucket_cache_ofs{bucket_cache_path};
 
   if (!bucket_cache_ofs.is_open()) {
     throw std::runtime_error("Could not open bucket cache file");
   }
 
-  b.incr_local_deep();
   unsigned int new_bucket_key = (1 << b.get_local_deep()) | b.get_key();
+  b.incr_local_deep();
   Bucket new_bucket{b.get_local_deep(), new_bucket_key, bucket_dir};
   std::fstream new_bucket_ofs =
       new_bucket.get_fstream(std::ios::out | std::ios::app);
@@ -118,41 +154,46 @@ Bucket HashiDir::split_bucket(Bucket &b) {
   }
 
   Reg r;
+  std::string reg_string;
   unsigned int ld{static_cast<unsigned int>(b.get_local_deep())};
-  while (!rs.endOfStream()) {
-    rs >> r;
+  while (std::getline(bucket_file, reg_string)) {
+    r = parseCsv(reg_string);
     if (pickLowBits(r.get_id(), ld) == new_bucket_key) {
-      new_bucket_ofs << regToCsv(r) << "\n";
+      new_bucket_ofs << reg_string << "\n";
     } else {
-      bucket_cache_ofs << regToCsv(r) << "\n";
+      bucket_cache_ofs << reg_string << "\n";
     }
   }
   bucket_cache_ofs.close();
   new_bucket_ofs.close();
   bucket_file.close();
 
-  std::filesystem::remove(bucket_path);
   std::filesystem::rename(bucket_cache_path, bucket_path);
 
   if (b.get_local_deep() > global_deep) {
     duplicate_dir();
   }
-  flush_local_deep(b);
-  flush_local_deep(new_bucket);
+  flush_bucket(b);
+  flush_bucket(new_bucket);
   return new_bucket;
 }
 
 void HashiDir::add_into_bucket(Bucket &b, const Reg &r) {
+  if (!std::filesystem::exists(b.get_path())) {
+    // create empty bucket file
+    std::fstream bucket_ofs = b.get_fstream(std::ios::out);
+    bucket_ofs.close();
+  }
   std::fstream bucket_ifs = b.get_fstream(std::ios::in);
   if (!bucket_ifs.is_open()) {
-    throw std::runtime_error("Failed toopen the bucket file!");
+    throw std::runtime_error(
+        "Failed to open the bucket file, context: add_into_bucket");
   }
-  auto rstream = RegStream(bucket_ifs);
 
   // count number of registers that are already in the bucket
   size_t reg_count = 0;
-  while (!rstream.endOfStream()) {
-    rstream.skip(1);
+  std::string tmp;
+  while (std::getline(bucket_ifs, tmp)) {
     ++reg_count;
   }
   bucket_ifs.close();
@@ -182,34 +223,6 @@ void HashiDir::add_into_bucket(Bucket &b, const Reg &r) {
                         std::to_string(MAX_BUCKET_REGS) + ", found " +
                         std::to_string(reg_count));
   }
-}
-
-void HashiDir::duplicate_dir() {
-  std::fstream dir_file{hashd_file,
-                        std::ios::in | std::ios::out | std::ios::app};
-  if (!dir_file.is_open()) {
-    throw std::runtime_error("Could not open hash directory file");
-  }
-
-  unsigned short ld;
-  unsigned int key;
-  auto dir_slots = static_cast<unsigned long>(std::pow(2, global_deep));
-
-  // skip global deep
-  dir_file.seekg(DEEP_SIZE, std::ios::beg);
-  unsigned int mask = (1 << global_deep);
-  for (unsigned long i = 0; i < dir_slots; ++i) {
-    dir_file.read(reinterpret_cast<char *>(&ld), sizeof(ld));
-    dir_file.read(reinterpret_cast<char *>(&key), sizeof(key));
-    unsigned int new_key = mask | key;
-
-    dir_file.write(reinterpret_cast<const char *>(&ld), sizeof(ld));
-    dir_file.write(reinterpret_cast<const char *>(&new_key), sizeof(new_key));
-  }
-  dir_slots *= 2;
-  dir_file.close();
-  ++global_deep;
-  flush_global_deep();
 }
 
 void HashiDir::add_reg(const Reg &r) {

@@ -14,7 +14,7 @@ private:
 
   // flushes
   void flush_global_deep() const;
-  void flush_local_deep(const Bucket &b) const;
+  void flush_bucket(const Bucket &b) const;
 
   // split a bucket into two
   Bucket split_bucket(Bucket &b);

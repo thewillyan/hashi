@@ -16,8 +16,3 @@ void Bucket::incr_local_deep() { ++ld; }
 std::fstream Bucket::get_fstream(const std::ios::openmode &flags) const {
   return std::fstream{path, flags};
 }
-
-RegStream Bucket::get_regstream() const {
-  auto stream = get_fstream(std::ios::in);
-  return RegStream(stream);
-}
