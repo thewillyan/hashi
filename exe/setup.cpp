@@ -1,6 +1,5 @@
 #include "hashi/include/dir.hpp"
 
-// NOTE: Debug HashiDir
 int main() {
   HashiDir dir{"../db", "setup"};
 
@@ -14,17 +13,5 @@ int main() {
   dir.add_reg(Reg{8, 5464.65, 2013});
   dir.add_reg(Reg{9, 7145.41, 2013});
   dir.add_reg(Reg{10, 8961.92, 2005});
-
-  dir.add_reg(Reg{13, 15594.44, 1996});
-  dir.add_reg(Reg{17, 16594.44, 1997});
-  dir.add_reg(Reg{21, 17594.44, 1998});
-  dir.add_reg(Reg{25, 18594.44, 1999});
-  dir.add_reg(Reg{33, 45594.84, 2000});
-
-  dir.del_reg(1);
-  dir.del_reg(17);
-  dir.del_reg(33);
-
-  dir.add_reg(Reg{17, 16594.44, 1997});
   return 0;
 }
