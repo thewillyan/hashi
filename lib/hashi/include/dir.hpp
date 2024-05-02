@@ -19,15 +19,16 @@ private:
   // split a bucket into two
   Bucket split_bucket(Bucket &b);
 
-  // returns the new local deep
   void add_into_bucket(Bucket &b, const Reg &r);
   void duplicate_dir();
+
+  void del_from_bucket(const Bucket &b, const unsigned int &rid) const;
 
 public:
   HashiDir(const std::string &db_path, const std::string &table_name);
 
   void add_reg(const Reg &r);
-  void del_reg(const unsigned int &r_key) const;
+  void del_reg(const unsigned int &rid) const;
 };
 
 #endif // !HASHI_DIR
