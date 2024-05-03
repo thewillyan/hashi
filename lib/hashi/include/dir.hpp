@@ -4,7 +4,6 @@
 #include "hashi/include/bucket.hpp"
 #include "hashi/include/reg.hpp"
 #include "ui/include/log.hpp"
-#include <optional>
 #include <string>
 #include <vector>
 
