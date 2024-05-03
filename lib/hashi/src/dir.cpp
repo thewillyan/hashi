@@ -3,7 +3,6 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
-#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -256,9 +255,16 @@ void HashiDir::add_reg(const Reg &r) {
   add_into_bucket(b, r);
 }
 
-void HashiDir::del_from_bucket(const Bucket &b, const unsigned int &rid) const {
+IncLog HashiDir::add_reg_and_log(const Reg &r) {
+  Bucket b = get_bucket(r.get_id());
+  add_into_bucket(b, r);
+  return IncLog{global_deep, b.get_local_deep()};
+}
+
+unsigned int HashiDir::del_from_bucket(const Bucket &b,
+                                       const unsigned int &rid) const {
   if (!std::filesystem::exists(b.get_path())) {
-    return;
+    return 0;
   }
   std::fstream bucket_ifs = b.get_fstream(std::ios::in);
   if (!bucket_ifs.is_open()) {
@@ -275,36 +281,55 @@ void HashiDir::del_from_bucket(const Bucket &b, const unsigned int &rid) const {
 
   Reg r;
   std::string reg_string;
+  unsigned int count = 0;
   while (std::getline(bucket_ifs, reg_string)) {
     r = parseCsv(reg_string);
     if (r.get_id() != rid) {
       bucket_cache_ofs << reg_string << '\n';
+    } else {
+      ++count;
     }
   }
   bucket_ifs.close();
   std::filesystem::rename(bucket_cache_path, b.get_path());
+  return count;
 }
 
 void HashiDir::del_reg(const unsigned int &rid) const {
   del_from_bucket(get_bucket(rid), rid);
 }
 
-std::optional<Reg> HashiDir::get_reg(const unsigned int &rid) const {
+RemLog HashiDir::del_reg_and_log(const unsigned int &rid) const {
+  Bucket b = get_bucket(rid);
+  unsigned int removed = del_from_bucket(b, rid);
+  return RemLog{
+      removed,
+      global_deep,
+      b.get_local_deep(),
+  };
+}
+
+std::vector<Reg> HashiDir::get_reg(const unsigned int &rid) const {
   Bucket b = get_bucket(rid);
   std::fstream bucket_ifs = b.get_fstream(std::ios::in);
   if (!bucket_ifs.is_open()) {
     throw std::runtime_error("Failed to open the bucket file");
   }
+  std::vector<Reg> results;
 
   std::string line;
-  Reg r;
+  unsigned int id;
   while (std::getline(bucket_ifs, line)) {
-    r = parseCsv(line);
-    if (r.get_id() == rid) {
-      std::optional<Reg> reg_opt(std::move(r));
-      return reg_opt;
+    id = parseCsv(line).get_id();
+    if (id == rid) {
+      results.emplace_back(parseCsv(line));
     }
   }
   bucket_ifs.close();
-  return {};
+  return results;
+}
+
+BusLog HashiDir::get_reg_and_log(const unsigned int &rid) const {
+  std::vector<Reg> rs = get_reg(rid);
+  return BusLog{static_cast<unsigned int>(rs.size())};
 }
