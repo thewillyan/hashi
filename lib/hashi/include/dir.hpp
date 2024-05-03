@@ -28,7 +28,8 @@ private:
   void del_from_bucket(const Bucket &b, const unsigned int &rid) const;
 
 public:
-  HashiDir(const std::string &db_path, const std::string &table_name);
+  HashiDir(const std::string &db_path, const std::string &table_name,
+           unsigned short gd);
 
   void add_reg(const Reg &r);
   void del_reg(const unsigned int &rid) const;

@@ -5,8 +5,11 @@
 
 #include <iostream>
 
+// TODO: parse "PG/<profundidade global inicial>"
+
 // NOTE: CLI
 int main() {
+
   std::string str{"INC:1\nREM:1\nBUS=:1"};
   std::stringstream ss{str};
 

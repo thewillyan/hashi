@@ -26,10 +26,11 @@ const unsigned long BUCKET_PTR_SIZE = sizeof(unsigned int);
 // local deep + bucket pointer
 const unsigned long BUCKET_REF_SIZE = DEEP_SIZE + BUCKET_PTR_SIZE;
 
-HashiDir::HashiDir(const std::string &db_path, const std::string &table_name)
+HashiDir::HashiDir(const std::string &db_path, const std::string &table_name,
+                   unsigned short gd)
     : hashd_file{db_path + "/" + table_name + "_dir.bin"},
       bucket_dir{db_path + "/" + table_name + "_buckets"} {
-  const unsigned short DEFAULT_GD = 3;
+  const unsigned short DEFAULT_GD = gd;
   const unsigned short DEFAULT_LD = 2;
 
   if (!std::filesystem::exists(hashd_file)) {
