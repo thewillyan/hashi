@@ -19,6 +19,7 @@ compile_commands.json
 
 # editors
 .vscode/*
+*.txt
 
 # database files
 db/*

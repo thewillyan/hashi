@@ -3,8 +3,9 @@
 
 #include "hashi/include/bucket.hpp"
 #include "hashi/include/reg.hpp"
-#include <optional>
+#include "ui/include/log.hpp"
 #include <string>
+#include <vector>
 
 // maybe should be called "HashDir"
 class HashiDir {
@@ -25,14 +26,21 @@ private:
   void add_into_bucket(Bucket &b, const Reg &r);
   void duplicate_dir();
 
-  void del_from_bucket(const Bucket &b, const unsigned int &rid) const;
+  unsigned int del_from_bucket(const Bucket &b, const unsigned int &rid) const;
 
 public:
-  HashiDir(const std::string &db_path, const std::string &table_name);
+  HashiDir(const std::string &db_path, const std::string &table_name,
+           unsigned short gd);
+
+  unsigned short get_global_deep() const;
 
   void add_reg(const Reg &r);
   void del_reg(const unsigned int &rid) const;
-  std::optional<Reg> get_reg(const unsigned int &rid) const;
+  std::vector<Reg> get_reg(const unsigned int &rid) const;
+
+  IncLog add_reg_and_log(const Reg &r);
+  RemLog del_reg_and_log(const unsigned int &rid) const;
+  BusLog get_reg_and_log(const unsigned int &rid) const;
 };
 
 #endif // !HASHI_DIR

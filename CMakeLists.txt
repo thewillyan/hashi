@@ -18,6 +18,12 @@ file(GLOB_RECURSE
 include_directories(${CMAKE_SOURCE_DIR}/lib/)
 add_library(HashiLib ${HASHI_LIB_SOURCES})
 
+# create library "HashiUiLib"
+file(GLOB_RECURSE
+  HASHI_LIB_SOURCES CONFIGURE_DEPENDS "lib/ui/include/*.hpp" "lib/ui/src/*.cpp")
+include_directories(${CMAKE_SOURCE_DIR}/lib/)
+add_library(HashiUiLib ${HASHI_LIB_SOURCES})
+
 # add tests
 add_executable(hashi_test lib/hashi/test/hashi_test.cpp)
 target_link_libraries(hashi_test PRIVATE Catch2::Catch2WithMain HashiLib)
@@ -32,7 +38,7 @@ catch_discover_tests(hashi_test)
 
 # add the executables
 add_executable(hashi exe/main.cpp)
-target_link_libraries(hashi HashiLib)
+target_link_libraries(hashi HashiLib HashiUiLib)
 add_custom_target(run
      COMMAND ./hashi
      DEPENDS hashi
