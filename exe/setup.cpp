@@ -1,7 +1,7 @@
 #include "hashi/include/dir.hpp"
 
 int main() {
-  HashiDir dir{"../db", "setup"};
+  HashiDir dir{"../db", "setup", 3};
 
   dir.add_reg(Reg{1, 5801.17, 1998});
   dir.add_reg(Reg{2, 9958.7, 2024});

@@ -74,6 +74,8 @@ HashiDir::HashiDir(const std::string &db_path, const std::string &table_name,
   }
 }
 
+unsigned short HashiDir::get_global_deep() const { return global_deep; }
+
 void HashiDir::flush_global_deep() const {
   std::fstream dir_file{hashd_file,
                         std::ios::in | std::ios::out | std::ios::binary};

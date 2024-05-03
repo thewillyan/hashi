@@ -33,6 +33,8 @@ public:
   HashiDir(const std::string &db_path, const std::string &table_name,
            unsigned short gd);
 
+  unsigned short get_global_deep() const;
+
   void add_reg(const Reg &r);
   void del_reg(const unsigned int &rid) const;
   std::vector<Reg> get_reg(const unsigned int &rid) const;
