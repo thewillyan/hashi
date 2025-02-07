@@ -1,12 +1,19 @@
-#include <vector>
+#ifndef HASHI_DB
+#define HASHI_DB
 
-// NOTE: this is a dummy class for purposes of setup
-class Database {
+#include "hashi/include/avail.hpp"
+#include "hashi/include/reg.hpp"
+
+class DbTable {
 private:
-  std::vector<int> data;
+  const std::string table_fpath;
+  AvailFileParser avail;
 
 public:
-  Database();
-  void add_data(int item);
-  int get_last() const;
+  DbTable(const std::string &db_path, const std::string &table_name);
+
+  void add_reg(const Reg &r);
+  void del_reg(const size_t &reg_idx);
 };
+
+#endif
